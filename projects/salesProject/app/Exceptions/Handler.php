@@ -43,8 +43,26 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        $this->reportable(function (Throwable $e) {
-            //
+       $this->renderable(function (ErrorException $e, $request) {
+            Log::info($e->getMessage());
+
+            return response()->json([
+                'date' => [
+                    'type' => 'error',
+                    'message' => 'Solicitação não encontrada, verficiar LOG'
+                ]
+            ], 404);
+        });
+
+        $this->renderable(function (TypeError $e, $request) {
+            Log::info($e->getMessage());
+
+            return response()->json([
+                'date' => [
+                    'type' => 'error',
+                    'message' => 'Solicitação não encontrada, verficiar LOG'
+                ]
+            ], 404);
         });
     }
 }
