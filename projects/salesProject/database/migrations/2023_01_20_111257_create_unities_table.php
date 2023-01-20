@@ -13,14 +13,17 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('unities', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('director_id')->unsigned()->index();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
+            $table->string('latitude');
+            $table->string('longitude');
             $table->timestamps();
+        });
+
+        Schema::table('unities', function (Blueprint $table) {
+            $table->foreign('director_id')->references('id')->on('directors')->onDelete('cascade');
         });
     }
 
@@ -31,6 +34,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('unities');
     }
 };

@@ -12,6 +12,11 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    const SALESMAN          = 1;
+    const MANAGER           = 2;
+    const DIRECTOR          = 3;
+    const GENERAL_MANAGER   = 4;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -29,16 +34,14 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
-        'password',
-        'remember_token',
+        'password'
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    public function profile() {
+        return $this->belongsTo(UserProfile::class);
+    }
+
+    public function company() {
+        return $this->belongsTo(Company::class);
+    }
 }
