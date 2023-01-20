@@ -58,4 +58,36 @@ class SalePolicy
         return  $user->profile_id == User::GENERAL_MANAGER;
     }
 
+    /**
+     * Verifica se o usuario autenticado pode ver detalhes da venda
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function canViewSale(User $user, Sale $sale)
+    {
+
+        if($this->isGeneralManager($user)) {
+            return true;
+        }
+
+        if($this->isDirector($user) && $sale->user->company->unity->director->id == $user->company->unity->director->id) {
+
+            return true;
+        }
+
+        if($this->isGeneralManager($user) && $sale->user->company->unity->id == $user->company->unity->id) {
+            return true;
+        }
+
+        if($this->isGeneralManager($user) && $sale->user->company->unity->id == $user->company->unity->id) {
+            return true;
+        }
+
+        if($this->isSalesman($user) &&  $sale->user->id == $user->id) {
+            return true;
+        }
+
+        return false;
+    }
 }

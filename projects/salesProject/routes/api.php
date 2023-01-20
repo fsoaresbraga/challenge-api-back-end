@@ -11,6 +11,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth:san
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
+    Route::get('/vendas', [SaleController::class, 'index'])->name('index.sales');
+    Route::get('/venda/{sale}', [SaleController::class, 'show'])->name('show.sale');
     Route::post('/lancar-venda', [SaleController::class, 'store'])->name('store.sale');
 
 });

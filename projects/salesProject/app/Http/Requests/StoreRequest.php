@@ -43,4 +43,12 @@ class StoreRequest extends FormRequest
             ]
         ];
     }
+
+    public function attributes()
+    {
+        return [
+            'date_sale' => 'Data da Venda',
+            'value' => 'Valor'
+        ];
+    }
 }
