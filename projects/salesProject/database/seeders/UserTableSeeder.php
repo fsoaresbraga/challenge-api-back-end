@@ -134,7 +134,7 @@ class UserTableSeeder extends Seeder
         ];
 
         foreach($sellers as $salesman) {
-            $unity = Unity::with('company')->where('nome',  $salesman['unity'])->first();
+            $unity = Unity::with('company')->where('name',  $salesman['unity'])->first();
 
             User::create([
                 'profile_id' => 1,
@@ -161,7 +161,7 @@ class UserTableSeeder extends Seeder
         ];
 
         foreach($managers as $manager) {
-            $unity = Unity::with('company')->where('nome',  $manager['unity'])->first();
+            $unity = Unity::with('company')->where('name',  $manager['unity'])->first();
 
             User::create([
                 'profile_id' => 2,
@@ -181,7 +181,7 @@ class UserTableSeeder extends Seeder
         ];
 
         foreach($directors as $director) {
-            $unity = Unity::with('company')->where('nome',  $director['unity'])->first();
+            $unity = Unity::with('company')->where('name',  $director['unity'])->first();
 
             User::create([
                 'profile_id' => 3,
