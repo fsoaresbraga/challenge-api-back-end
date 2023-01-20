@@ -19,5 +19,9 @@ class Company extends Model
     public function unity() {
         return $this->belongsTo(Unity::class);
     }
+
+    public function users(){
+        return $this->hasMany(User::class);
+    }
 }
 

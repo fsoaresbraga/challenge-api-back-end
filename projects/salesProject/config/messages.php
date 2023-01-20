@@ -10,6 +10,7 @@ return [
     'errorViewSaleByUnity' => ['message' => 'Não há permissão para visualizar vendas de outras unidades.', 'statusCode' => 403],
     'errorViewSaleByDirector' => ['message' => 'Não há permissão para visualizar vendas de outra diretoria.', 'statusCode' => 403],
     'cantSeeSale' => ['message' => 'Não há permissão para visualizar essa venda.', 'statusCode' => 403],
+    'noPermission' => ['message' => 'Não há permissão para visualizar esse end-point.', 'statusCode' => 403],
     'saleCreated' => ['message' => 'Venda lançada com sucesso.', 'statusCode' => 200],
 
 ];

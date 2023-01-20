@@ -7,12 +7,15 @@ use Carbon\Carbon;
 use App\Models\Sale;
 use App\Models\User;
 use App\Models\Unity;
+use App\Models\Director;
 use App\Http\Requests\StoreRequest;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SaleResource;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Http\Resources\UnityResource;
 use App\Http\Requests\FilterSaleRequest;
 use App\Http\Resources\DetailsSaleResource;
 
@@ -20,49 +23,60 @@ class SaleController extends Controller
 {
 
     public function index(FilterSaleRequest $request) {
+
         $req = $request->validated();
 
-        $dateStart = Carbon::createFromFormat('d/m/Y', $req['date_start'])->startOfDay()->format('Y-m-d H:i:s');
-        $dataEnd = Carbon::createFromFormat('d/m/Y', $req['date_end'])->endOfDay()->format('Y-m-d H:i:s');
+        try {
 
-        $query = Sale::with('user.company.unity.director')->whereBetween('date_sale', [$dateStart, $dataEnd]);
+            $dateStart = Carbon::createFromFormat('d/m/Y', $req['date_start'])->startOfDay()->format('Y-m-d H:i:s');
+            $dataEnd = Carbon::createFromFormat('d/m/Y', $req['date_end'])->endOfDay()->format('Y-m-d H:i:s');
 
-        //filtro para vendedores
-        if(Gate::allows('isSalesman', Sale::class)) {
+            $query = Sale::with('user.company.unity.director')->whereBetween('date_sale', [$dateStart, $dataEnd]);
 
-            return $this->filterBySalesman($query, $req);
+            //filtro para vendedores
+            if(Gate::allows('isSalesman', Sale::class)) {
+
+                return $this->filterBySalesman($query, $req);
+            }
+
+            //filtro para gerente
+            if(Gate::allows('isManager', Sale::class)) {
+
+                return $this->filterByManager($query, $req);
+            }
+
+            //filtro para diretor
+            if(Gate::allows('isDirector', Sale::class)) {
+
+                return $this->filterByDirector($query, $req);
+            }
+
+
+            //diretor geral
+            if(!is_null($req['user'])) {
+                $query->where('user_id', $req['user']);
+            }
+
+            if(!is_null($req['unity'])) {
+                $query->whereHas('user.company.unity', function($q) use($req){
+                    $q->where('id', $req['unity']);
+                });
+            }
+
+            if(!is_null($req['director'])) {
+                $query->whereHas('user.company.unity.director', function($q) use($req){
+                    $q->where('id', $req['director']);
+                });
+            }
+
+            return SaleResource::collection($query->get());
+
+        } catch(Exception $e) {
+
+            Log::error($e);
+
+            return response()->json(['errors' => ['message' => config('messages.unavailableService.message')]],config('messages.unavailableService.statusCode'));
         }
-
-        //filtro para gerente
-        if(Gate::allows('isManager', Sale::class)) {
-
-            return $this->filterByManager($query, $req);
-        }
-
-        //filtro para diretor
-        if(Gate::allows('isDirector', Sale::class)) {
-
-            return $this->filterByDirector($query, $req);
-        }
-
-        //diretor geral
-        if(!is_null($req['user'])) {
-            $query->where('user_id', $req['user']);
-        }
-
-        if(!is_null($req['unity'])) {
-            $query->whereHas('user.company.unity', function($q) use($req){
-                $q->where('id', $req['unity']);
-            });
-        }
-
-        if(!is_null($req['director'])) {
-            $query->whereHas('user.company.unity.director', function($q) use($req){
-                $q->where('id', $req['director']);
-            });
-        }
-
-        return SaleResource::collection($query->get());
 
     }
 
@@ -115,6 +129,78 @@ class SaleController extends Controller
 
         $sale = Sale::with('user.company.unity')->find($sale->id);
         return new DetailsSaleResource($sale);
+    }
+
+    public function assembleFilters() {
+
+        $queryUnities = Unity::with('director')->orderBy('name', 'ASC');
+        $querySellers = User::orderBy('name', 'ASC');
+
+        //filtro para vendedores
+       if(Gate::allows('isSalesman', Sale::class)) {
+
+           $queryUnities->where('id', Auth::user()->company->unity->id);
+          
+
+           $querySellers->where('id', Auth::user()->id);
+
+
+            return [
+                'users' => UserResource::collection($querySellers->get()),
+                'unities' => UnityResource::collection($queryUnities->get()),
+            ];
+
+        }
+
+        //filtro para gerente
+        if(Gate::allows('isManager', Sale::class)) {
+
+            $queryUnities->where('id', Auth::user()->company->unity->id);
+
+
+            $querySellers->whereHas('company.unity', function($q){
+                $q->where('id', Auth::user()->company->unity->id);
+            });
+
+            $querySellers->where('profile_id', User::SALESMAN);
+
+
+            return [
+                'users' => UserResource::collection($querySellers->get()),
+                'unities' => UnityResource::collection($queryUnities->get()),
+            ];
+
+
+        }
+
+        //filtro para diretor
+        if(Gate::allows('isDirector', Sale::class)) {
+
+            $queryUnities->whereHas('company.unity.director', function($q){
+                $q->where('id', Auth::user()->company->unity->director->id);
+            });
+
+
+            $querySellers->whereHas('company.unity.director', function($q){
+                $q->where('id', Auth::user()->company->unity->director->id);
+            });
+
+            $querySellers->where('profile_id', User::SALESMAN);
+
+            return [
+                'users' => UserResource::collection($querySellers->get()),
+                'unities' => UnityResource::collection($queryUnities->get()),
+            ];
+        }
+
+
+        $querySellers->where('profile_id', User::SALESMAN);
+
+        return [
+            'users' => UserResource::collection($querySellers->get()),
+            'unities' => UnityResource::collection($queryUnities->get()),
+        ];
+
     }
 
     private function calculateUnitDistance($latitude, $longitude) {
