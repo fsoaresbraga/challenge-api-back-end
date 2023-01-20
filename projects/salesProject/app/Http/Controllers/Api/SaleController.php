@@ -10,15 +10,19 @@ use App\Http\Requests\StoreRequest;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-
-
+use Illuminate\Support\Facades\Gate;
 class SaleController extends Controller
 {
     public function store(StoreRequest $request) {
-        
+
+
         $req = $request->validated();
 
         try {
+
+            if(!Gate::allows('isSalesman', Sale::class)) {
+                return response()->json(['errors' => ['message' => config('messages.errorRegisteringSale.message')]], config('messages.errorRegisteringSale.statusCode'));
+            }
 
             $calculateDistance = $this->calculateUnitDistance($req['latitude'],$req['longitude']);
             $convertValue = $this->convertDecimalValue($request['value']);
