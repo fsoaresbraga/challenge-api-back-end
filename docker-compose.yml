@@ -1,0 +1,46 @@
+version: "3.9"
+services: 
+  web-server:
+    image: nginx:1.21.1
+    container_name: convicti-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - convic-ti
+    volumes:
+      - ./confs/servers/:/etc/nginx/conf.d/
+      - ./projects:/var/www/projects
+      
+  
+  php:
+    build:
+      dockerfile: ./php.dockerfile
+      context: .
+    image: php:8.1-fpm
+    container_name: convicti-php
+    volumes: 
+      - ./projects:/var/www/projects
+    ports: 
+      - "9000:9000"
+    networks: 
+      - convic-ti
+
+  db:
+    image: mysql:8.0.26
+    container_name: convicti-mysql
+    volumes: 
+      - ./confs/mysql_db:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: convicti_db
+      MYSQL_USER: challenge
+      MYSQL_PASSWORD: challenge
+    ports:
+      - "3308:3308"
+    networks: 
+      - convic-ti
+networks: 
+  convic-ti:
+    driver: bridge
